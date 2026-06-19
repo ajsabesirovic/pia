@@ -1,5 +1,6 @@
 # ---- Stage 1: build the Angular SPA ----
-FROM node:20-alpine AS frontend
+# Angular 22 requires Node ^22.22.3 || ^24.15.0 || >=26.0.0
+FROM node:24-alpine AS frontend
 WORKDIR /fe
 COPY frontend/package*.json ./
 RUN npm ci
