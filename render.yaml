@@ -1,0 +1,67 @@
+# Render Blueprint — Laravel (Blade web app + JSON API) + Angular SPA, single origin,
+# backed by Render's free managed PostgreSQL.
+# Docs: https://render.com/docs/blueprint-spec
+
+databases:
+  - name: pia-db
+    plan: free
+    databaseName: laravel
+    user: laravel
+
+services:
+  - type: web
+    name: pia
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      # Paste the generated key in the dashboard (Environment tab). See RENDER_DEPLOY.md.
+      - key: APP_KEY
+        sync: false
+      # Set to your live URL after the first deploy, e.g. https://pia.onrender.com
+      - key: APP_URL
+        sync: false
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: error
+
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: pia-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: pia-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: pia-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: pia-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: pia-db
+          property: password
+
+      # No persistent disk on free tier — keep state out of the filesystem.
+      - key: SESSION_DRIVER
+        value: cookie
+      - key: CACHE_DRIVER
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
+
+      # true => seed demo data on deploy. Flip to false after the first successful deploy.
+      - key: SEED_ON_DEPLOY
+        value: "true"

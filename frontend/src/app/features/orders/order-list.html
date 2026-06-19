@@ -1,0 +1,68 @@
+<div class="row" style="align-items:center; margin-bottom:1rem">
+  <h1 style="margin:0">Narudžbenice</h1>
+  <div class="spacer"></div>
+  <a class="btn btn-primary" routerLink="/narudzbenice/nova">+ Nova narudžbenica</a>
+</div>
+
+<div class="card">
+  <div class="field" style="max-width:260px">
+    <label for="status">Filter po statusu</label>
+    <select id="status" (change)="onFilterChange($any($event.target).value)">
+      <option value="">Svi statusi</option>
+      @for (s of statuses; track s) {
+        <option [value]="s">{{ statusMeta[s].label }}</option>
+      }
+    </select>
+  </div>
+
+  @if (loading()) {
+    <p class="muted">Učitavanje...</p>
+  } @else if (error()) {
+    <div class="alert alert-error">{{ error() }}</div>
+  } @else if (rows().length === 0) {
+    <p class="muted">Nema narudžbenica za prikaz.</p>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Broj</th>
+          <th>Datum</th>
+          <th>Dobavljač</th>
+          <th>Apoteka</th>
+          <th class="text-right">Vrednost</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (n of rows(); track n.id) {
+          <tr>
+            <td><strong>{{ n.broj_narudzbenice }}</strong></td>
+            <td>{{ n.datum_kreiranja | date: 'dd.MM.yyyy' }}</td>
+            <td>{{ n.dobavljac?.naziv }}</td>
+            <td>{{ n.apoteka?.naziv }}</td>
+            <td class="text-right">{{ n.ukupna_vrednost | number: '1.2-2' }} RSD</td>
+            <td>
+              <span class="badge" [style.background]="statusMeta[n.status].color">
+                {{ statusMeta[n.status].label }}
+              </span>
+            </td>
+            <td class="text-right">
+              <a class="btn btn-ghost btn-sm" [routerLink]="['/narudzbenice', n.id]">Detalji</a>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (page()!.last_page > 1) {
+      <div class="row" style="align-items:center; margin-top:1rem">
+        <button class="btn btn-ghost btn-sm" [disabled]="page()!.current_page <= 1"
+                (click)="goToPage(page()!.current_page - 1)">‹ Prethodna</button>
+        <span class="muted">Strana {{ page()!.current_page }} / {{ page()!.last_page }}</span>
+        <button class="btn btn-ghost btn-sm" [disabled]="page()!.current_page >= page()!.last_page"
+                (click)="goToPage(page()!.current_page + 1)">Sledeća ›</button>
+      </div>
+    }
+  }
+</div>

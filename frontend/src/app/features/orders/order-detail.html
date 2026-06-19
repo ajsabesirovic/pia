@@ -1,0 +1,100 @@
+<div class="row" style="align-items:center; margin-bottom:1rem">
+  <a class="btn btn-ghost" routerLink="/narudzbenice">‹ Nazad na listu</a>
+</div>
+
+@if (loading()) {
+  <p class="muted">Učitavanje...</p>
+} @else if (error() && !order()) {
+  <div class="alert alert-error">{{ error() }}</div>
+} @else if (order(); as o) {
+
+  @if (success()) { <div class="alert alert-success">{{ success() }}</div> }
+  @if (error()) { <div class="alert alert-error">{{ error() }}</div> }
+
+  <div class="card" style="margin-bottom:1rem">
+    <div class="row" style="align-items:flex-start">
+      <div>
+        <h1 style="margin:0">{{ o.broj_narudzbenice }}</h1>
+        <p class="muted" style="margin:0.25rem 0 0">
+          Kreirana {{ o.datum_kreiranja | date: 'dd.MM.yyyy HH:mm' }}
+        </p>
+      </div>
+      <div class="spacer"></div>
+      <span class="badge" [style.background]="statusMeta[o.status].color"
+            style="font-size:0.9rem; padding:0.35rem 0.9rem">
+        {{ statusMeta[o.status].label }}
+      </span>
+    </div>
+
+    <div class="row" style="margin-top:1rem; gap:2rem">
+      <div><div class="muted">Dobavljač</div><strong>{{ o.dobavljac?.naziv }}</strong></div>
+      <div><div class="muted">Apoteka</div><strong>{{ o.apoteka?.naziv }}</strong></div>
+      <div><div class="muted">Kreirao</div><strong>{{ o.korisnik?.puno_ime }}</strong></div>
+      @if (o.datum_isporuke) {
+        <div><div class="muted">Datum isporuke</div><strong>{{ o.datum_isporuke | date: 'dd.MM.yyyy' }}</strong></div>
+      }
+    </div>
+
+    @if (o.napomena) {
+      <div style="margin-top:1rem">
+        <div class="muted">Napomena</div>
+        <div>{{ o.napomena }}</div>
+      </div>
+    }
+  </div>
+
+  <div class="card" style="margin-bottom:1rem">
+    <h3>Stavke</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Lek</th>
+          <th class="text-right">Količina</th>
+          <th class="text-right">Cena/kom</th>
+          <th class="text-right">Ukupno</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (s of o.stavke; track s.redni_broj) {
+          <tr>
+            <td>{{ s.redni_broj }}</td>
+            <td>{{ s.lek?.naziv }} @if (s.lek?.jacina) { <span class="muted">({{ s.lek?.jacina }})</span> }</td>
+            <td class="text-right">{{ s.kolicina }}</td>
+            <td class="text-right">{{ s.cena_po_komadu | number: '1.2-2' }}</td>
+            <td class="text-right">{{ (+s.kolicina * +s.cena_po_komadu) | number: '1.2-2' }}</td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="4" class="text-right"><strong>Ukupna vrednost:</strong></td>
+          <td class="text-right"><strong>{{ o.ukupna_vrednost | number: '1.2-2' }} RSD</strong></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Akcije</h3>
+    <p class="muted" style="margin-top:0">
+      Dozvoljene akcije zavise od trenutnog statusa narudžbenice.
+    </p>
+    <div class="row">
+      <button class="btn btn-primary" [disabled]="!canSend() || acting()" (click)="send()">
+        Pošalji dobavljaču
+      </button>
+      <button class="btn btn-success" [disabled]="!canDeliver() || acting()" (click)="deliver()">
+        Označi kao isporučeno
+      </button>
+      <button class="btn btn-danger" [disabled]="!canCancel() || acting()" (click)="cancel()">
+        Otkaži
+      </button>
+    </div>
+    @if (o.status === 'isporucena' || o.status === 'otkazana') {
+      <p class="muted" style="margin-bottom:0">
+        Narudžbenica je u završnom statusu — dalje akcije nisu moguće.
+      </p>
+    }
+  </div>
+}

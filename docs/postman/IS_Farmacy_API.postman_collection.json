@@ -1,0 +1,422 @@
+{
+  "info": {
+    "name": "IS Farmacy - PIA API",
+    "description": "Postman kolekcija za testiranje Laravel REST API-ja koji koristi Angular SPA.\n\nDva procesa:\n1) Prijava korisnika (validacija unosa)\n2) Obrada narudzbenice (slozeniji poslovni proces)\n\nKako koristiti:\n- Izaberi okruzenje 'IS Farmacy - Local'.\n- Prvo pokreni 'Auth / Login (valid)' - test skripta automatski snima {{token}}.\n- Zatim 'Narudzbenice / Create order' - snima {{narudzbenica_id}}.\n- Ostali zahtevi koriste te promenljive.\n\nKolekcija sadrzi i NEGATIVNE zahteve (nevalidni unosi) za test plan.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (valid) - TC-01",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Vraca token', () => pm.expect(body.token).to.be.a('string').and.not.empty);",
+                  "pm.test('Vraca korisnika', () => pm.expect(body.user).to.be.an('object'));",
+                  "if (body.token) { pm.collectionVariables.set('token', body.token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin.apoteka1@apoteke.rs\",\n  \"password\": \"password\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/login", "host": ["{{base_url}}"], "path": ["login"] },
+            "description": "Validan unos (admin apoteke A iz seed-a). Ocekuje 200 + token. Ovaj nalog ne mora slati apoteka_id pri kreiranju narudzbenice."
+          }
+        },
+        {
+          "name": "Login (pogresna lozinka) - TC-04",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Poruka o gresci na email polju', () => pm.expect(pm.response.json().errors.email).to.exist);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin.apoteka1@apoteke.rs\",\n  \"password\": \"pogresna\"\n}" },
+            "url": { "raw": "{{base_url}}/login", "host": ["{{base_url}}"], "path": ["login"] }
+          }
+        },
+        {
+          "name": "Login (nevalidan email format) - TC-02",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Greska na polju email', () => pm.expect(pm.response.json().errors.email).to.exist);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin.apoteka1-apoteke.rs\",\n  \"password\": \"password\"\n}" },
+            "url": { "raw": "{{base_url}}/login", "host": ["{{base_url}}"], "path": ["login"] }
+          }
+        },
+        {
+          "name": "Login (prazna polja) - TC-03",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 422', () => pm.response.to.have.status(422));",
+                  "const e = pm.response.json().errors;",
+                  "pm.test('Greska na email i password', () => { pm.expect(e.email).to.exist; pm.expect(e.password).to.exist; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"\",\n  \"password\": \"\"\n}" },
+            "url": { "raw": "{{base_url}}/login", "host": ["{{base_url}}"], "path": ["login"] }
+          }
+        },
+        {
+          "name": "Me (token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Vraca korisnika', () => pm.expect(pm.response.json().user).to.be.an('object'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/me", "host": ["{{base_url}}"], "path": ["me"] }
+          }
+        },
+        {
+          "name": "Me (bez tokena -> 401) - TC-05",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('Status 401', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/me", "host": ["{{base_url}}"], "path": ["me"] }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/logout", "host": ["{{base_url}}"], "path": ["logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reference",
+      "item": [
+        {
+          "name": "Dobavljaci",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/dobavljaci", "host": ["{{base_url}}"], "path": ["dobavljaci"] }
+          }
+        },
+        {
+          "name": "Lekovi dobavljaca",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/dobavljaci/1/lekovi", "host": ["{{base_url}}"], "path": ["dobavljaci", "1", "lekovi"] }
+          }
+        },
+        {
+          "name": "Apoteke",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/apoteke", "host": ["{{base_url}}"], "path": ["apoteke"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Narudzbenice",
+      "item": [
+        {
+          "name": "Index (lista, paginacija)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/narudzbenice?status=&page=1",
+              "host": ["{{base_url}}"],
+              "path": ["narudzbenice"],
+              "query": [
+                { "key": "status", "value": "" },
+                { "key": "page", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create order (valid) - TC-06",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.test('Status nacrt', () => pm.expect(b.status).to.eql('nacrt'));",
+                  "pm.test('Ukupna vrednost izracunata', () => pm.expect(Number(b.ukupna_vrednost)).to.be.above(0));",
+                  "if (b.id) { pm.collectionVariables.set('narudzbenica_id', b.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dobavljac_id\": 1,\n  \"napomena\": \"Test narudzbenica\",\n  \"stavke\": [\n    { \"lek_id\": 1, \"kolicina\": 5, \"cena_po_komadu\": 120.00 }\n  ]\n}"
+            },
+            "url": { "raw": "{{base_url}}/narudzbenice", "host": ["{{base_url}}"], "path": ["narudzbenice"] },
+            "description": "Centralni admin mora dodati i \"apoteka_id\". Admin apoteke ne salje apoteka_id (uzima se njegova)."
+          }
+        },
+        {
+          "name": "Create order (prazne stavke) - TC-07",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Greska na stavke', () => pm.expect(pm.response.json().errors.stavke).to.exist);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"dobavljac_id\": 1,\n  \"stavke\": []\n}" },
+            "url": { "raw": "{{base_url}}/narudzbenice", "host": ["{{base_url}}"], "path": ["narudzbenice"] }
+          }
+        },
+        {
+          "name": "Create order (kolicina = 0) - TC-08",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Greska na kolicini', () => pm.expect(pm.response.json().errors).to.have.property('stavke.0.kolicina'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"dobavljac_id\": 1,\n  \"stavke\": [ { \"lek_id\": 1, \"kolicina\": 0, \"cena_po_komadu\": 120.00 } ]\n}" },
+            "url": { "raw": "{{base_url}}/narudzbenice", "host": ["{{base_url}}"], "path": ["narudzbenice"] }
+          }
+        },
+        {
+          "name": "Create order (nepostojeci dobavljac) - TC-09",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Greska na dobavljac_id', () => pm.expect(pm.response.json().errors.dobavljac_id).to.exist);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"dobavljac_id\": 999999,\n  \"stavke\": [ { \"lek_id\": 1, \"kolicina\": 5, \"cena_po_komadu\": 120.00 } ]\n}" },
+            "url": { "raw": "{{base_url}}/narudzbenice", "host": ["{{base_url}}"], "path": ["narudzbenice"] }
+          }
+        },
+        {
+          "name": "Show order",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/narudzbenice/{{narudzbenica_id}}", "host": ["{{base_url}}"], "path": ["narudzbenice", "{{narudzbenica_id}}"] }
+          }
+        },
+        {
+          "name": "Posalji dobavljacu - TC-10",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status poslata', () => pm.expect(pm.response.json().status).to.eql('poslata'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/narudzbenice/{{narudzbenica_id}}/posalji", "host": ["{{base_url}}"], "path": ["narudzbenice", "{{narudzbenica_id}}", "posalji"] }
+          }
+        },
+        {
+          "name": "Oznaci isporuceno - TC-11",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status isporucena', () => pm.expect(pm.response.json().status).to.eql('isporucena'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/narudzbenice/{{narudzbenica_id}}/isporuceno", "host": ["{{base_url}}"], "path": ["narudzbenice", "{{narudzbenica_id}}", "isporuceno"] }
+          }
+        },
+        {
+          "name": "Otkazi vec isporucenu (nedozvoljen prelaz) - TC-12",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Poruka o nedozvoljenom prelazu', () => pm.expect(pm.response.json().message).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{base_url}}/narudzbenice/{{narudzbenica_id}}/otkazi", "host": ["{{base_url}}"], "path": ["narudzbenice", "{{narudzbenica_id}}", "otkazi"] },
+            "description": "Pokreni POSLE 'Oznaci isporuceno'. Isporucenu narudzbenicu nije moguce otkazati -> 422."
+          }
+        }
+      ]
+    }
+  ]
+}

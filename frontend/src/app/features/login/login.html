@@ -1,0 +1,63 @@
+<div class="login-wrap">
+  <div class="card login-card">
+    <div class="login-head">
+      <div class="logo">💊</div>
+      <h1>Apoteka</h1>
+      <p class="muted">Prijava na sistem upravljanja narudžbenicama</p>
+    </div>
+
+    @if (serverError()) {
+      <div class="alert alert-error">{{ serverError() }}</div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="field">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          autocomplete="username"
+          placeholder="ime@apoteke.rs"
+          [class.invalid]="showError('email')"
+        />
+        @if (showError('email')) {
+          @if (form.controls.email.errors?.['required']) {
+            <span class="error">Email je obavezan.</span>
+          } @else if (form.controls.email.errors?.['email']) {
+            <span class="error">Unesite ispravan email.</span>
+          }
+        }
+      </div>
+
+      <div class="field">
+        <label for="password">Lozinka</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          autocomplete="current-password"
+          placeholder="••••••••"
+          [class.invalid]="showError('password')"
+        />
+        @if (showError('password')) {
+          @if (form.controls.password.errors?.['required']) {
+            <span class="error">Lozinka je obavezna.</span>
+          } @else if (form.controls.password.errors?.['minlength']) {
+            <span class="error">Lozinka mora imati bar 4 znaka.</span>
+          }
+        }
+      </div>
+
+      <button type="submit" class="btn btn-primary login-btn" [disabled]="loading()">
+        {{ loading() ? 'Prijava...' : 'Prijavi se' }}
+      </button>
+    </form>
+
+    <div class="hint muted">
+      Test nalozi (lozinka: <code>password</code>):<br />
+      <code>admin&#64;apoteke.rs</code> — centralni admin<br />
+      <code>admin.apoteka1&#64;apoteke.rs</code> — admin apoteke
+    </div>
+  </div>
+</div>

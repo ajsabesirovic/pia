@@ -1,0 +1,122 @@
+<div class="row" style="align-items:center; margin-bottom:1rem">
+  <h1 style="margin:0">Nova narudžbenica</h1>
+  <div class="spacer"></div>
+  <a class="btn btn-ghost" routerLink="/narudzbenice">‹ Nazad</a>
+</div>
+
+@if (serverError()) {
+  <div class="alert alert-error">{{ serverError() }}</div>
+}
+
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="row">
+      <div class="field" style="flex:1; min-width:240px">
+        <label for="dobavljac">Dobavljač *</label>
+        <select id="dobavljac" (change)="onDobavljacChange($any($event.target).value)"
+                [class.invalid]="form.controls['dobavljac_id'].touched && form.controls['dobavljac_id'].invalid">
+          <option [value]="''">— Izaberite dobavljača —</option>
+          @for (d of dobavljaci(); track d.id) {
+            <option [value]="d.id">{{ d.naziv }}</option>
+          }
+        </select>
+        @if (form.controls['dobavljac_id'].touched && form.controls['dobavljac_id'].invalid) {
+          <span class="error">Dobavljač je obavezan.</span>
+        }
+      </div>
+
+      @if (isCentral) {
+        <div class="field" style="flex:1; min-width:240px">
+          <label for="apoteka">Apoteka *</label>
+          <select id="apoteka" formControlName="apoteka_id"
+                  [class.invalid]="form.controls['apoteka_id'].touched && form.controls['apoteka_id'].invalid">
+            <option [ngValue]="null">— Izaberite apoteku —</option>
+            @for (a of apoteke(); track a.id) {
+              <option [ngValue]="a.id">{{ a.naziv }} ({{ a.grad }})</option>
+            }
+          </select>
+          @if (form.controls['apoteka_id'].touched && form.controls['apoteka_id'].invalid) {
+            <span class="error">Apoteka je obavezna.</span>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="field">
+      <label for="napomena">Napomena</label>
+      <textarea id="napomena" formControlName="napomena" rows="2"
+                placeholder="Opciona napomena..."></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="align-items:center; margin-bottom:0.5rem">
+      <h3 style="margin:0">Stavke</h3>
+      <div class="spacer"></div>
+      <button type="button" class="btn btn-sm" (click)="addStavka()"
+              [disabled]="lekovi().length === 0">+ Dodaj stavku</button>
+    </div>
+
+    @if (!form.controls['dobavljac_id'].value) {
+      <p class="muted">Izaberite dobavljača da biste dodali lekove.</p>
+    } @else if (loadingLekovi()) {
+      <p class="muted">Učitavanje lekova...</p>
+    } @else if (lekovi().length === 0) {
+      <p class="muted">Ovaj dobavljač nema lekova u ponudi.</p>
+    } @else {
+      <table formArrayName="stavke">
+        <thead>
+          <tr>
+            <th style="width:45%">Lek</th>
+            <th style="width:15%">Količina</th>
+            <th style="width:20%">Cena/kom (RSD)</th>
+            <th class="text-right" style="width:15%">Ukupno</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of stavke.controls; track $index; let i = $index) {
+            <tr [formGroupName]="i">
+              <td>
+                <select (change)="onLekChange(i, $any($event.target).value)"
+                        [class.invalid]="row.get('lek_id')!.touched && row.get('lek_id')!.invalid">
+                  <option [value]="''">— Izaberite lek —</option>
+                  @for (l of lekovi(); track l.lek_id) {
+                    <option [value]="l.lek_id">
+                      {{ l.naziv }}@if (l.jacina) { ({{ l.jacina }}) } — {{ l.jkl_sifra }}
+                    </option>
+                  }
+                </select>
+              </td>
+              <td>
+                <input type="number" min="1" formControlName="kolicina"
+                       [class.invalid]="row.get('kolicina')!.touched && row.get('kolicina')!.invalid" />
+              </td>
+              <td>
+                <input type="number" min="0" step="0.01" formControlName="cena_po_komadu"
+                       [class.invalid]="row.get('cena_po_komadu')!.touched && row.get('cena_po_komadu')!.invalid" />
+              </td>
+              <td class="text-right">{{ lineTotal(i) | number: '1.2-2' }}</td>
+              <td class="text-right">
+                <button type="button" class="btn btn-danger btn-sm" (click)="removeStavka(i)">✕</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" class="text-right"><strong>Ukupna vrednost:</strong></td>
+            <td class="text-right"><strong>{{ total() | number: '1.2-2' }} RSD</strong></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    }
+  </div>
+
+  <div class="row" style="margin-top:1rem; justify-content:flex-end">
+    <button type="submit" class="btn btn-primary" [disabled]="!canSubmit()">
+      {{ saving() ? 'Čuvanje...' : 'Kreiraj narudžbenicu' }}
+    </button>
+  </div>
+</form>
