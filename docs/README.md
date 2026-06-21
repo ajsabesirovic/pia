@@ -5,7 +5,6 @@ same implementacije (Laravel API + Angular SPA).
 
 | Dokument | Šta pokriva (zahtev profesora) |
 |----------|--------------------------------|
-| [`ODBRANA.md`](ODBRANA.md) | **Priprema za odbranu** — sve što treba pokazati i znati + podsetnik za dijagrame |
 | [`SSA_EER_MODEL.md`](SSA_EER_MODEL.md) | Opis dva procesa iz SSA modela + tabele i veze iz EER modela |
 | [`TEST_PLAN.md`](TEST_PLAN.md) | Test plan: klase ekvivalencije i granične vrednosti, 12 test primera |
 | [`TEST_REPORT.md`](TEST_REPORT.md) | Izveštaj testiranja + opis pronađenih grešaka/defekata |
@@ -23,11 +22,10 @@ same implementacije (Laravel API + Angular SPA).
 3. Pokreni redom: Login → Create order → Posalji → Isporuceno → (Otkazi = 422).
 4. Rezultate upiši u `TEST_REPORT.md`.
 
-## Za odbranu (checklist profesora)
+## Pokrivenost zahteva
 - [x] Laravel API rute (`routes/api.php`) + Angular frontend
 - [x] Komunikacija Angular ↔ Laravel (JSON, Bearer token)
 - [x] Manuelno i Postman testiranje
 - [x] Klase ekvivalencije i granične vrednosti (TEST_PLAN)
 - [x] ≥ 8–10 test primera (ima 12)
 - [x] Izveštaj + defekti (TEST_REPORT, D-01/D-02)
-- [ ] Iscrtati DFD i EER dijagram prema `SSA_EER_MODEL.md` (slika za odbranu)

@@ -5,7 +5,7 @@ izvršeno preko REST poziva (curl/Postman) + provera baze.
 **Datum testiranja:** 2026-06-17.
 
 > Rezultati ispod su **stvarno izmereni** pokretanjem backend-a i slanjem zahteva.
-> Iste rezultate daje i Postman kolekcija (`docs/postman/`) — preporučeno demonstrirati na odbrani.
+> Iste rezultate daje i Postman kolekcija (`docs/postman/`).
 
 ---
 
@@ -14,9 +14,10 @@ izvršeno preko REST poziva (curl/Postman) + provera baze.
 | Proces | Broj TC | Prošlo | Palo | Napomena |
 |--------|---------|--------|------|----------|
 | Prijava | 6 (TC-01..05, TC-13) | 6 | 0 | sve prošlo |
-| Narudžbenica | 8 (TC-06..12, TC-14) | 8 | 0 | D-01 ispravljen i re-testiran |
+| Narudžbenica | 9 (TC-06..12, TC-14, TC-15) | 8 | 1 | TC-15 otkrio D-01 (ispravljen i re-testiran) |
 
-**Ukupno: 14/14 test primera prošlo.** Defekt D-01 pronađen, ispravljen i potvrđen re-testom.
+**Ukupno: 14/15 test primera prošlo.** TC-15 je otkrio defekt D-01 (HTTP 500); defekt je
+ispravljen i potvrđen re-testom (sada vraća 422).
 
 ---
 
@@ -63,9 +64,6 @@ izvršeno preko REST poziva (curl/Postman) + provera baze.
   izabranom dobavljaču (`dobavljac_lek`). Moguće je ručno (preko API-ja) naručiti lek koji
   dobavljač ne nudi. UI to sprečava kaskadnim padajućim menijem, ali API ne.
 - **Predlog:** dodatno proveriti postojanje para (`dobavljac_id`, `lek_id`) u `dobavljac_lek`.
-
-> Ako se prilikom odbrane traži proširenje funkcionalnosti, D-01 je idealan kandidat —
-> jednolinijska izmena validacionog pravila + ponovni test (TC sa cenom 0).
 
 ---
 
